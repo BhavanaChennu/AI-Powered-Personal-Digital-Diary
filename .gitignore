@@ -1,0 +1,18 @@
+# Backend secrets
+diary-backend/.env
+diary-backend/src/main/resources/application.properties
+diary-backend/target/
+diary-backend/.classpath
+diary-backend/.project
+diary-backend/.settings/
+
+# Frontend secrets
+diary-frontend/diary-frontend/.env
+diary-frontend/diary-frontend/.env.local
+diary-frontend/diary-frontend/node_modules/
+diary-frontend/diary-frontend/build/
+
+# IDE
+.idea/
+.vscode/
+*.iml
