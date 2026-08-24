@@ -7,12 +7,13 @@ diary-backend/.project
 diary-backend/.settings/
 
 # Frontend secrets
-diary-frontend/diary-frontend/.env
-diary-frontend/diary-frontend/.env.local
-diary-frontend/diary-frontend/node_modules/
-diary-frontend/diary-frontend/build/
+diary-frontend/.env
+diary-frontend/.env.local
+diary-frontend/node_modules/
+diary-frontend/build/
 
 # IDE
 .idea/
 .vscode/
 *.iml
+
