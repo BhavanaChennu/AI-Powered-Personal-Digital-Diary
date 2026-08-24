@@ -1,0 +1,12 @@
+# Secrets - NEVER push these
+.env
+application.properties
+
+# Build files
+target/
+*.jar
+
+# Eclipse junk
+.classpath
+.project
+.settings/
