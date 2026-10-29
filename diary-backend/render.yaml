@@ -1,29 +1,21 @@
+
 services:
   - type: web
     name: diary-backend
     runtime: docker
     plan: free
+    dockerfilePath: ./diary-backend/Dockerfile
+    dockerContext: ./diary-backend
     envVars:
-      - key: DATABASE_URL
-        fromDatabase:
-          name: diary-db
-          property: connectionString
-      - key: DB_USERNAME
-        fromDatabase:
-          name: diary-db
-          property: user
-      - key: DB_PASSWORD
-        fromDatabase:
-          name: diary-db
-          property: password
-      - key: JWT_SECRET
+      - key: SPRING_DATASOURCE_URL
+        sync: false
+      - key: SPRING_DATASOURCE_USERNAME
+        sync: false
+      - key: SPRING_DATASOURCE_PASSWORD
+        sync: false
+      - key: APP_JWT_SECRET
         generateValue: true
-      # Set these two manually in the Render dashboard:
-      - key: GROQ_API_KEY
+      - key: APP_GROQ_API_KEY
         sync: false
-      - key: FRONTEND_URL
+      - key: APP_CORS_ALLOWED_ORIGIN
         sync: false
-
-databases:
-  - name: diary-db
-    plan: free
