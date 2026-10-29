@@ -1,12 +1,13 @@
-# Secrets - NEVER push these
-.env
-application.properties
-
-# Build files
 target/
+*.class
 *.jar
-
-# Eclipse junk
+*.log
+hs_err_pid*.log
+replay_pid*.log
+uploads/
+.env
+.idea/
+.settings/
 .classpath
 .project
-.settings/
+.DS_Store
