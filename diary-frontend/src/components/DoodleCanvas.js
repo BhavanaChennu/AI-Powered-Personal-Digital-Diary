@@ -1,4 +1,4 @@
-```jsx
+
 import React, { useRef, useState } from "react";
 
 const COLORS = [
@@ -20,147 +20,129 @@ function DoodleCanvas({ onInsert, onClose }) {
   const [width, setWidth] = useState(3);
   const [hasDrawing, setHasDrawing] = useState(false);
 
-  // Get pointer coordinates relative to the canvas.
-  const getPos = (e) => {
+  const getPos = (event) => {
     const canvas = canvasRef.current;
+    if (!canvas) return { x: 0, y: 0 };
+
     const rect = canvas.getBoundingClientRect();
 
     return {
-      x: (e.clientX - rect.left) * (canvas.width / rect.width),
-      y: (e.clientY - rect.top) * (canvas.height / rect.height),
+      x: (event.clientX - rect.left) * (canvas.width / rect.width),
+      y: (event.clientY - rect.top) * (canvas.height / rect.height),
     };
   };
 
-  // Track the area containing the drawing.
   const expandBounds = (x, y) => {
-    const padding = width + 4;
+    const pad = width + 4;
 
     if (!bounds.current) {
       bounds.current = {
-        minX: x - padding,
-        minY: y - padding,
-        maxX: x + padding,
-        maxY: y + padding,
+        minX: x - pad,
+        minY: y - pad,
+        maxX: x + pad,
+        maxY: y + pad,
       };
     } else {
-      bounds.current.minX = Math.min(bounds.current.minX, x - padding);
-      bounds.current.minY = Math.min(bounds.current.minY, y - padding);
-      bounds.current.maxX = Math.max(bounds.current.maxX, x + padding);
-      bounds.current.maxY = Math.max(bounds.current.maxY, y + padding);
+      bounds.current.minX = Math.min(bounds.current.minX, x - pad);
+      bounds.current.minY = Math.min(bounds.current.minY, y - pad);
+      bounds.current.maxX = Math.max(bounds.current.maxX, x + pad);
+      bounds.current.maxY = Math.max(bounds.current.maxY, y + pad);
     }
   };
 
-  // Begin drawing.
-  const start = (e) => {
-    if (e.button !== undefined && e.button !== 0) return;
+  const start = (event) => {
+    if (event.button !== undefined && event.button !== 0) return;
 
-    e.preventDefault();
+    event.preventDefault();
 
     const canvas = canvasRef.current;
     if (!canvas) return;
 
     drawing.current = true;
 
-    const ctx = canvas.getContext("2d");
-    const point = getPos(e);
+    const point = getPos(event);
+    const context = canvas.getContext("2d");
 
-    ctx.beginPath();
-    ctx.moveTo(point.x, point.y);
+    if (!context) return;
 
-    // Draw a dot even when the user only clicks once.
-    ctx.fillStyle = color;
-    ctx.beginPath();
-    ctx.arc(point.x, point.y, width / 2, 0, Math.PI * 2);
-    ctx.fill();
-
-    lastPoint.current = point;
-    expandBounds(point.x, point.y);
-    setHasDrawing(true);
-  };
-
-  // Continue drawing.
-  const move = (e) => {
-    if (!drawing.current) return;
-
-    e.preventDefault();
-
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext("2d");
-    const point = getPos(e);
-
-    ctx.beginPath();
-
-    if (lastPoint.current) {
-      ctx.moveTo(lastPoint.current.x, lastPoint.current.y);
-    } else {
-      ctx.moveTo(point.x, point.y);
+    if (canvas.setPointerCapture) {
+      try {
+        canvas.setPointerCapture(event.pointerId);
+      } catch (error) {
+        // Continue drawing if pointer capture is unavailable.
+      }
     }
 
-    ctx.lineTo(point.x, point.y);
-    ctx.strokeStyle = color;
-    ctx.lineWidth = width;
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
-    ctx.stroke();
+    context.fillStyle = color;
+    context.beginPath();
+    context.arc(point.x, point.y, width / 2, 0, Math.PI * 2);
+    context.fill();
 
     lastPoint.current = point;
-
     expandBounds(point.x, point.y);
     setHasDrawing(true);
   };
 
-  // Stop drawing.
+  const move = (event) => {
+    if (!drawing.current) return;
+
+    event.preventDefault();
+
+    const canvas = canvasRef.current;
+    if (!canvas || !lastPoint.current) return;
+
+    const point = getPos(event);
+    const context = canvas.getContext("2d");
+
+    if (!context) return;
+
+    context.beginPath();
+    context.moveTo(lastPoint.current.x, lastPoint.current.y);
+    context.lineTo(point.x, point.y);
+    context.strokeStyle = color;
+    context.lineWidth = width;
+    context.lineCap = "round";
+    context.lineJoin = "round";
+    context.stroke();
+
+    lastPoint.current = point;
+    expandBounds(point.x, point.y);
+  };
+
   const stop = () => {
     drawing.current = false;
     lastPoint.current = null;
   };
 
-  // Clear the canvas.
   const clear = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const ctx = canvas.getContext("2d");
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const context = canvas.getContext("2d");
+    if (context) {
+      context.clearRect(0, 0, canvas.width, canvas.height);
+    }
 
     bounds.current = null;
     lastPoint.current = null;
     drawing.current = false;
-
     setHasDrawing(false);
   };
 
-  // Export the drawing and send it to the parent component.
   const insert = () => {
     const canvas = canvasRef.current;
+    const box = bounds.current;
 
-    if (!canvas || !bounds.current || !hasDrawing) {
+    if (!canvas || !box || !hasDrawing) {
       alert("Please draw something before inserting it.");
       return;
     }
 
     try {
-      const minX = Math.max(
-        0,
-        Math.floor(bounds.current.minX)
-      );
-
-      const minY = Math.max(
-        0,
-        Math.floor(bounds.current.minY)
-      );
-
-      const maxX = Math.min(
-        canvas.width,
-        Math.ceil(bounds.current.maxX)
-      );
-
-      const maxY = Math.min(
-        canvas.height,
-        Math.ceil(bounds.current.maxY)
-      );
+      const minX = Math.max(0, Math.floor(box.minX));
+      const minY = Math.max(0, Math.floor(box.minY));
+      const maxX = Math.min(canvas.width, Math.ceil(box.maxX));
+      const maxY = Math.min(canvas.height, Math.ceil(box.maxY));
 
       const cropWidth = Math.max(1, maxX - minX);
       const cropHeight = Math.max(1, maxY - minY);
@@ -169,13 +151,13 @@ function DoodleCanvas({ onInsert, onClose }) {
       croppedCanvas.width = cropWidth;
       croppedCanvas.height = cropHeight;
 
-      const croppedContext = croppedCanvas.getContext("2d");
-
-      if (!croppedContext) {
-        throw new Error("Could not prepare the doodle image.");
+      const context = croppedCanvas.getContext("2d");
+      if (!context) {
+        alert("Could not prepare the doodle image.");
+        return;
       }
 
-      croppedContext.drawImage(
+      context.drawImage(
         canvas,
         minX,
         minY,
@@ -190,31 +172,25 @@ function DoodleCanvas({ onInsert, onClose }) {
       const imageData = croppedCanvas.toDataURL("image/png");
 
       if (!imageData || imageData === "data:,") {
-        throw new Error("Could not export the doodle image.");
+        alert("Could not export the doodle image.");
+        return;
       }
 
       if (typeof onInsert !== "function") {
-        throw new Error(
-          "The parent component has not provided the insert function."
-        );
+        alert("The editor insert function is missing.");
+        return;
       }
 
       onInsert(imageData);
     } catch (error) {
-      console.error("Failed to insert doodle:", error);
-      alert(
-        error.message ||
-          "Could not insert the doodle. Please try again."
-      );
+      console.error("Doodle insertion failed:", error);
+      alert("Could not insert the doodle. Check the VS Code/browser console.");
     }
   };
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div
-        className="modal-box"
-        onClick={(e) => e.stopPropagation()}
-      >
+      <div className="modal-box" onClick={(event) => event.stopPropagation()}>
         <h3>Doodle</h3>
 
         <canvas
@@ -235,43 +211,40 @@ function DoodleCanvas({ onInsert, onClose }) {
             <button
               key={c}
               type="button"
+              className="rte-swatch"
               aria-label={`Choose color ${c}`}
               title={`Choose color ${c}`}
-              className="rte-swatch"
-              style={{
-                background: c,
-                outline:
-                  c === color ? "2px solid #333" : "none",
-              }}
               onClick={() => setColor(c)}
+              style={{
+                backgroundColor: c,
+                outline: color === c ? "2px solid #333" : "none",
+              }}
             />
           ))}
 
-          <input
-            type="range"
-            min="1"
-            max="10"
-            value={width}
-            aria-label="Brush size"
-            onChange={(e) => setWidth(Number(e.target.value))}
-          />
-
-          <button type="button" onClick={clear}>
-            Clear
-          </button>
+          <label>
+            Pen width: {width}
+            <input
+              type="range"
+              min="1"
+              max="12"
+              value={width}
+              onChange={(event) => setWidth(Number(event.target.value))}
+            />
+          </label>
         </div>
 
-        <div className="form-actions">
-          <button
-            type="button"
-            onClick={insert}
-            disabled={!hasDrawing}
-          >
-            Insert into entry
+        <div className="doodle-actions">
+          <button type="button" onClick={clear}>
+            Clear
           </button>
 
           <button type="button" onClick={onClose}>
             Cancel
+          </button>
+
+          <button type="button" onClick={insert} disabled={!hasDrawing}>
+            Insert into Entry
           </button>
         </div>
       </div>
@@ -280,4 +253,3 @@ function DoodleCanvas({ onInsert, onClose }) {
 }
 
 export default DoodleCanvas;
-```
