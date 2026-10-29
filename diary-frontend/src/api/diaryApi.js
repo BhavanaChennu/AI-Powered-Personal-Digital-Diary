@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8081/api";
+const API_BASE_URL = process.env.REACT_APP_API_URL || "https://diary-backend-lb1x.onrender.com/api";
 
 axios.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");

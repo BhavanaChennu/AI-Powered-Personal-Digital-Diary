@@ -3,7 +3,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { getAllEntries, deleteEntry, searchEntries, getFavorites } from "../api/diaryApi";
 import BackToHome from "./BackToHome";
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8081/api";
+const API_BASE_URL = process.env.REACT_APP_API_URL || "https://diary-backend-lb1x.onrender.com/api";
 
 function stripHtml(html) {
   const div = document.createElement("div");
